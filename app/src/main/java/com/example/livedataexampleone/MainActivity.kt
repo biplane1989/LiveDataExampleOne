@@ -79,7 +79,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun converLiveData(data: Int): LiveData<Int> {
-        liveDataB.value = data
-        return liveDataB
+        val livedata = MutableLiveData<Int>()
+        livedata.value = data + 1
+        return livedata
     }
 }
