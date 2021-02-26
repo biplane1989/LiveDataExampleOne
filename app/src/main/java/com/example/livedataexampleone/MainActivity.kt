@@ -12,6 +12,8 @@ class MainActivity : AppCompatActivity() {
     val TAG = "TAG"
     var liveDataA = MutableLiveData<Int>()
     val liveDataB = MutableLiveData<Int>()
+    var liveDataC = MutableLiveData<String>()
+
     val mediatorLiveData = MediatorLiveData<Int>()
 
     val liveDataAObserver = Observer<Int> {
@@ -25,40 +27,53 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "data B : " + it)
     }
 
+    val liveDataCObserver = Observer<String> {
+        Log.d(TAG, "data C : " + it)
+    }
+
     val mediatorLiveDataObserver = Observer<Int> {
         Log.d(TAG, "mediator : " + it)
+    }
+
+    init {
+        lifecycleScope.launch {
+            var count = 0
+            while (true) {
+                delay(500)
+                liveDataA.value = count
+                count++
+//                liveDataB.value = count + 1
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        lifecycleScope.launch {
-            var count = 0
-            while (true) {
-                delay(1000)
-                liveDataA.value = count
-                count++
-                liveDataB.value = count + 1
-            }
-        }
+//        livedataMap()
+//        livedataSwithMap()
+//        livedataMediator()
 
-        val data = Transformations.map(liveDataA) { it ->
-            convertDataA(it)
-        }
-        val data1 = Transformations.map(liveDataA) { it ->
-            convertDataA1(it)
-        }
+        livedataIntToString()
+    }
 
-        val data2 = Transformations.switchMap(liveDataA) {
-            converLiveData(it)
-        }
-//        data.observe(this, liveDataAObserver)
-//        data1.observe(this, liveDataA1Observer)
-//
-//        data2.observe(this, liveDataBObserver)
+    fun livedataIntToString() {
+        liveDataC = liveDataA.map {
+            "orange $it"
+        } as MutableLiveData<String>
 
+        liveDataC = liveDataA.switchMap {
 
+            val liveData = MutableLiveData<String>()
+            liveData.value = "tomato $it"
+            liveData
+        } as MutableLiveData<String>
+
+        liveDataC.observe(this, liveDataCObserver)
+    }
+
+    fun livedataMediator() {
         mediatorLiveData.addSource(liveDataA) {
             mediatorLiveData.value = it
         }
@@ -66,8 +81,28 @@ class MainActivity : AppCompatActivity() {
         mediatorLiveData.addSource(liveDataB) {
             mediatorLiveData.value = it
         }
-
         mediatorLiveData.observe(this, mediatorLiveDataObserver)
+    }
+
+    fun livedataMap() {
+
+        val data = liveDataA.map { it ->
+            convertDataA(it)
+        }
+
+        val data1 = Transformations.map(liveDataA) { it ->
+            convertDataA1(it)
+        }
+        data.observe(this, liveDataAObserver)
+        data1.observe(this, liveDataA1Observer)
+
+    }
+
+    fun livedataSwithMap() {
+        val data2 = Transformations.switchMap(liveDataA) {
+            converLiveData(it)
+        }
+        data2.observe(this, liveDataBObserver)
     }
 
     private fun convertDataA(data: Int): Int {
